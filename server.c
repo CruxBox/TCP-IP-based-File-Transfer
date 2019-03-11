@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 600
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,65 +6,89 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include<sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+struct timeval tv;
 
-int main(int args,char** arg){
 
-    struct  sockaddr_in serv_ad;
-    int connfd=0;
-    int listenfd=0;
-    //creating socket for listening:
-    listenfd=socket(AF_INET, SOCK_STREAM,0);
+int main(int argc,char** argv){
+        struct sockaddr_in server,client;
+        int sockfd=0,connfd=0;
+	int size=sizeof(struct sockaddr);
+        sockfd=socket(AF_INET,SOCK_STREAM,0);
 
-    //setting up the serv_ad (server address struct) for using IPV4: 
-    memset(&serv_ad,'0',sizeof(serv_ad));
-    serv_ad.sin_family = AF_INET;
-    serv_ad.sin_addr.s_addr=htons(INADDR_ANY);
-    serv_ad.sin_port = htons(atoi(arg[1]));
+        memset(&server,'0',sizeof(server));
 
-    //binding the socket:
-    bind(listenfd, (struct sockaddr*)&serv_ad, sizeof(serv_ad));
-    if(listen(listenfd,5)==-1){
-        printf("Cannot listen. Check error\n");
+        server.sin_addr.s_addr=INADDR_ANY;
+        server.sin_family=AF_INET;
+        server.sin_port=htons(atoi(argv[1]));
+	    printf("Enter port number %d in client side\n",ntohs(server.sin_port));
+ 
+        const int optionval = 1;
+setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT | SO_SNDTIMEO, &optionval, sizeof(optionval));
+
+        bind(sockfd,(struct sockaddr*)&server,sizeof server);
+        
+        // printf("Reached after bind\n");
+        if(listen(sockfd,10)<0){
+        perror("listen()");
         exit(1);
-    }
-    
-    //choosing file that server admin decides to send:
-    FILE *file;
-	if((file = fopen(arg[2], "rb"))==NULL){
-		printf("Error opening file\n");
-		exit(2);
-	}
-     // Find EOF
-	fseek(file,0,SEEK_END);
-  	unsigned long long fSize=ftell(file);
-  	rewind(file);
+        }
+        // printf("Reached after listen\n");
+        FILE *log;
+        log=fopen("logs.txt","ra");
+        
+        while(1){
+            connfd=accept(sockfd,(struct sockaddr*)&client,&size);
 
+        char name_requested[100];
+        int a=0;
+        a=recv(connfd,name_requested,sizeof(name_requested),0);
+        if(a<0){
+            perror("recv()->name_requested");
+            exit(1);
+        }
+        name_requested[a]='\0';
 
-    //Reading and sending process starts:
-    while(1){
-      printf("waiting...\n");
-    connfd=accept(listenfd,(struct sockaddr*)NULL,NULL);
-  	// allocate memory to contain the whole file in binary
-  	char *buffer=(char*)malloc(sizeof(char)*fSize);
+        
+        FILE* f;
+        char* buffer=(char*)malloc(sizeof(char)*256);
+        if(f=fopen(name_requested,"rb")){
+            send(connfd,name_requested,strlen(name_requested),0);
+            int p=0;
+            //send requested file
+            while(!feof(f)){
+                p=fread(buffer,1,sizeof(buffer),f);
+                printf("Bytes read: %d\t",p);
+                p=send(connfd,buffer,p,0);
+                printf("Bytes sent: %d\n",p);
+                if(p<0){
+                    perror("Not sent any bytes");
+                    exit(5);
+                }
+            }
+            fclose(f);
+            close(connfd);
+            printf("Sending process done\n");
 
-  	// copy the file into the buffer:
-  	if(fread(buffer,1,fSize,file)!=fSize) {
-  		printf("Buffer Fill Error\n");
-  		exit(3);
-  	}
-  	fclose(file);
-    //sending the data:
-    write(connfd,buffer,fSize); 
-    
-    //closing current instance of socket
-    close(connfd);
-    sleep(1);
-    }
+        }
+        else{
+            //send log.txt file
+            send(connfd,"logs.txt",8,0);
+            printf("logs.txt\n");
+            int p=0;
+            while(!feof(log)){
+                p=fread(buffer,1,sizeof(buffer),log);
+                send(connfd,buffer,p,0);
+                
+            }
 
+            close(connfd);
 
-
-    
-    exit(0);
+        }
+            
 }
+ return 0;
+ }
