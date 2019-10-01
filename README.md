@@ -6,7 +6,7 @@ If no server address is provided the program assumes the server to be on the loc
 # Arguments for server.c :
 {port number}
 
-Commands to run in terminal on Linux : 
+## Commands to run in terminal on Linux : 
 
 gcc server.c -o server
 
@@ -15,7 +15,7 @@ gcc server.c -o server
 # Arguments for client.c :
 {server address} {port number}
 
-Commands to run in terminal on Linux :
+## Commands to run in terminal on Linux :
 
 gcc client.c -o client
 
