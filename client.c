@@ -13,7 +13,7 @@
 struct sockaddr_in server;
 static int sockfd=-1,listenfd=-1;
 struct timeval tv;
-    
+
 
 void connect_request(){
     tv.tv_sec=2;
@@ -32,10 +32,10 @@ void connect_request(){
 
         FILE *f;
         char name_requested[100],name_available[100];
-        
+
         printf("What is the name of the file you want from the server(with extension)?\n");
         scanf("%s",name_requested);
-        
+
         int a;
         a=send(sockfd,name_requested,strlen(name_requested),0);
 	    //printf("%s\n",name_requested);
@@ -43,7 +43,7 @@ void connect_request(){
             perror("send()");
             exit(3);
         }
-        
+
         //printf("Sent\n");
         int choice=1;
         setsockopt(sockfd,SOL_SOCKET,SO_RCVTIMEO,&choice,sizeof(choice));
@@ -55,7 +55,7 @@ void connect_request(){
             exit(4);
         }
         //printf("Received\n");
-        
+
         name_available[a]='\0';
         f=fopen(name_available,"ab");
         char recv_buffer[256];
@@ -81,7 +81,7 @@ printf("File transfer successful\n");
 
 int main(int argc, char** argv){
     memset(&server,0,sizeof(server));
-   
+
     if(argc<2 || argc>3) {
         printf("Usage: ./client.out [host address] port\n");
         exit(0);
@@ -91,11 +91,11 @@ int main(int argc, char** argv){
         server.sin_family=AF_INET;
         server.sin_addr.s_addr=inet_addr("127.0.0.1");
         server.sin_port=htons(atoi(argv[1]));
-        
+
         connect_request();
     }
     else if(argc==3){
-        printf("Address of server: %s\nPort of server: %s\nIn process...\n",argv[1],argv[2]);
+        printf("Address of the server: %s\nPort of server: %s\nIn process...\n",argv[1],argv[2]);
         server.sin_addr.s_addr=inet_addr(argv[1]);
         server.sin_family=AF_INET;
         server.sin_port=htons(atoi(argv[2]));
@@ -109,5 +109,3 @@ int main(int argc, char** argv){
 
     return 0;
 }
-
-
