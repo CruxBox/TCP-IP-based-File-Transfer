@@ -57,7 +57,7 @@ void connect_request(){
         //printf("Received\n");
         
         name_available[a]='\0';
-        f=fopen(name_available,"ab");
+        f=fopen(name_available,"w+b");
         char recv_buffer[256];
         memset(recv_buffer,'\0',sizeof(recv_buffer));
         a=0;

@@ -10,7 +10,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-struct timeval tv;
 
 
 int main(int argc,char** argv){
@@ -27,7 +26,7 @@ int main(int argc,char** argv){
 	    printf("Enter port number %d in client side\n",ntohs(server.sin_port));
  
         const int optionval = 1;
-setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT | SO_SNDTIMEO, &optionval, sizeof(optionval));
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optionval, sizeof(optionval));
 
         bind(sockfd,(struct sockaddr*)&server,sizeof server);
         
@@ -38,7 +37,7 @@ setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT | SO_SNDTIMEO, &optio
         }
         // printf("Reached after listen\n");
         FILE *log;
-        log=fopen("logs.txt","ra");
+        log=fopen("logs.txt","rw+b");
         
         while(1){
             connfd=accept(sockfd,(struct sockaddr*)&client,&size);
@@ -51,8 +50,8 @@ setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT | SO_SNDTIMEO, &optio
             exit(1);
         }
         name_requested[a]='\0';
-
-        
+        printf("%s\n", name_requested);
+        printf("%d\n", strlen(name_requested));
         FILE* f;
         char* buffer=(char*)malloc(sizeof(char)*256);
         if(f=fopen(name_requested,"rb")){
@@ -84,7 +83,7 @@ setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT | SO_SNDTIMEO, &optio
                 send(connfd,buffer,p,0);
                 
             }
-
+            fclose(log);
             close(connfd);
 
         }
